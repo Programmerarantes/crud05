@@ -11,14 +11,15 @@ app.use(
     })
 )
 
-app.get('/', (request, response)=> {
-    response.json({info: 'Node, Express, Postgres API'})
+app.get('/', (req, res)=> {
+    res.json({info: 'Node, Express, Postgres API'})
 }) 
 
 app.get('/users', db.getUsers)
 app.post('/users', db.createUser)
 app.put('/users/:id', db.updateUser)
 app.delete('/users/:id', db.deleteUser)
+app.get("/count", db.countUsers);
 
 app.listen(port, () => {
     console.log(`App running on: http://localhost:4000`)

@@ -8,56 +8,62 @@ const pool = new Pool ({
     port: 5432,
 })
 
-const getUsers = (require, response) => {
-    pool.query('SELECT * FROM users', (error, results) => {
-        if(error) { 
-            throw error 
-        }
-        response.status(200).json(results.rows)
-    })
+const getUsers = (_, res) => {
+  const q = "SELECT * FROM users;";
+
+  pool.query(q, (err, data) => {
+    if (err) return res.status(500).json(err);
+
+    return res.status(200).json(data.rows);
+  });
+};
+
+const createUser = (req, res) => {
+  const { nome, cpf, data_nasc, rg, sexo } = req.body;
+  const q = `INSERT INTO users (nome, cpf, data_nasc, rg, sexo) VALUES ('${nome}', '${cpf}', '${data_nasc}', '${rg}', '${sexo}') RETURNING id`;
+
+  pool.query(q, (err, data) => {
+    if (err) return res.status(500).json(err);
+
+    return res.status(200).json(data.rows);
+  });
+};
+
+const updateUser = (req, res) => {
+  const { nome, cpf, rg, data_nasc, sexo } = req.body
+  const q = `UPDATE users SET nome = '${nome}', cpf = '${cpf}', rg = '${rg}', data_nasc = '${data_nasc}', sexo = '${sexo}' WHERE id = ${req.params.id} RETURNING id`
+  pool.query(q, (err, data) => {
+    if(err) return res.status(500).json(err)
+
+    return res.status(200).json(data.rows)
+  } )
 }
 
-const createUser = (request, response) => {
-  const { nome, cpf, rg, data_nasc, sexo } = request.body
+const deleteUser = (req, res) => {
+  const query = `DELETE FROM users WHERE id = ${req.params.id}`;
 
-pool.query('INSERT INTO users (nome, cpf, rg, data_nasc, sexo) VALUES ($1, $2, $3, $4, $5) RETURNING id', [nome, cpf, rg, data_nasc, sexo], (error, results) => {
-    if (error) {
-      throw error
-    }
-    response.status(201).send(`User added with ID: ${results.rows[0].id}`)
-  })
-}
+  pool.query(query, (err, data) => {
+    if (err) return res.status(500).json(err);
 
-const updateUser = (request, response) => {
-  const id = parseInt(request.params.id)
-  const { nome, cpf, rg, data_nasc, sexo } = request.body
+    return res.status(200).json({});
+  });
+};
 
-  pool.query(
-    'UPDATE users SET nome = $1, cpf = $2, rg = $3, data_nasc = $4, sexo = $5 WHERE id = $6',
-    [nome, cpf, rg, data_nasc, sexo, id],
-    (error, results) => {
-      if (error) {
-        throw error
-      }
-      response.status(200).send(`User modified with ID: ${id}`)
-    }
-  )
-}
+const countUsers = (_, res) => {
+  const query = `SELECT COUNT(*) FROM usuarios;`;
 
-const deleteUser = (request, response) => {
-  const id = parseInt(request.params.id)
+  db.query(query, (err, data) => {
+    if (err) return res.status(500).json(err);
 
-  pool.query('DELETE FROM users WHERE id = $1', [id], (error, results) => {
-    if (error) {
-      throw error
-    }
-    response.status(200).send(`User deleted with ID: ${id}`)
-  })
-}
+    const count = data.rows[0].count;
+    return res.status(200).json({ count });
+  });
+};
 
 module.exports = {
     getUsers,
     createUser,
     updateUser,
-    deleteUser
+    deleteUser,
+    countUsers
 }
